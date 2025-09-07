@@ -83,27 +83,25 @@ def upload_file():
                 request_options={"timeout": 300}
             )
             app.logger.info("...model.generate_content() finished.")
-            app.logger.info(f"Full Gemini Response: {response}")
 
-            # --- Corrected Response Handling ---
-            # According to the provided snippet, we need to parse the response differently.
+            # --- Final, Corrected Response Handling ---
             processed_image_data = None
+            text_response = "" # We can still capture text if needed
+
+            # Loop through all parts to find the image data
             for part in response.candidates[0].content.parts:
                 if part.inline_data is not None:
                     processed_image_data = part.inline_data.data
-                    break # Found the image, no need to look further
-            
-            if not processed_image_data:
-                # Check for text part which might contain an error or refusal from the model
-                text_response = ""
-                for part in response.candidates[0].content.parts:
-                    if part.text is not None:
-                        text_response += part.text
-                
-                app.logger.error(f"Model did not return image. Text response: {text_response}")
-                raise ValueError(f"The model did not return an image. Response: {text_response or 'Empty'}")
+                    # Don't break, just in case, but we've found what we need
+                elif part.text is not None:
+                    text_response += part.text
 
-            app.logger.info("Extracting image data from response.")
+            # After the loop, check if we found any image data
+            if processed_image_data is None:
+                app.logger.error(f"Model did not return image data. Text response: {text_response}")
+                raise ValueError(f"The model returned text but no image. Response: '{text_response or 'Empty'}'")
+
+            app.logger.info("Successfully extracted image data from response.")
             processed_image = Image.open(BytesIO(processed_image_data))
             
             # Save the processed image with a unique name
