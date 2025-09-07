@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text2PS - Image Modifier</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Image Modifier</h1>
+        <p>Upload your photo, provide an instruction, and see the magic!</p>
+        
+        <form id="upload-form">
+            <div class="form-group">
+                <label for="file-input">1. Choose a photo</label>
+                <input type="file" id="file-input" name="file" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label for="instruction-input">2. Enter your instruction</label>
+                <input type="text" id="instruction-input" name="instruction" placeholder="e.g., 'make the sky blue'" required>
+            </div>
+            <button type="submit" id="submit-button">Generate</button>
+        </form>
+
+        <div id="loading" class="hidden">
+            <div class="spinner"></div>
+            <p>Processing your image...</p>
+        </div>
+
+        <div id="result" class="hidden">
+            <div class="image-container">
+                <h2>Original</h2>
+                <img id="original-image" src="" alt="Original Image">
+            </div>
+            <div class="image-container">
+                <h2>Modified</h2>
+                <img id="processed-image" src="" alt="Processed Image">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const submitButton = document.getElementById('submit-button');
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const originalImage = document.getElementById('original-image');
+        const processedImage = document.getElementById('processed-image');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            // Show loading indicator and hide previous results
+            loadingDiv.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Generating...';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Set image sources and show results
+                originalImage.src = data.original_url;
+                processedImage.src = data.processed_url;
+                resultDiv.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            } finally {
+                // Hide loading indicator
+                loadingDiv.classList.add('hidden');
+                submitButton.disabled = false;
+                submitButton.textContent = 'Generate';
+            }
+        });
+    </script>
+</body>
+</html>
