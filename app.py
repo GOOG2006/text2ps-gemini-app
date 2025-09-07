@@ -83,6 +83,7 @@ def upload_file():
                 request_options={"timeout": 300}
             )
             app.logger.info("...model.generate_content() finished.")
+            app.logger.info(f"Full Gemini Response: {response}")
 
             # --- Corrected Response Handling ---
             # According to the provided snippet, we need to parse the response differently.
